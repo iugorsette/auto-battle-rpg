@@ -1,5 +1,6 @@
 import '../skills/skill.dart';
 import '../progression/level_progression.dart';
+import 'status_effect.dart';
 
 class Character {
   final String name;
@@ -18,6 +19,8 @@ class Character {
   final List<Skill> skills;
   final LevelProgression progression;
   void Function(DamageEvent event)? onDamage;
+  final Map<StatusType, int> statuses = {};
+  final List<String> relics = [];
 
   Character({
     required this.name,
@@ -107,6 +110,36 @@ class Character {
     mana = (mana + value).clamp(0, maxMana).toInt();
   }
 
+  void addStatus(StatusType type, int durationSeconds) {
+    if (durationSeconds <= 0) return;
+    statuses[type] = durationSeconds;
+  }
+
+  void clearStatus(StatusType type) {
+    statuses.remove(type);
+  }
+
+  void tickStatuses() {
+    if (statuses.isEmpty) return;
+    final expired = <StatusType>[];
+    final entries = statuses.entries.toList();
+    for (final entry in entries) {
+      final next = entry.value - 1;
+      if (next <= 0) {
+        expired.add(entry.key);
+      } else {
+        statuses[entry.key] = next;
+      }
+    }
+    for (final type in expired) {
+      statuses.remove(type);
+    }
+  }
+
+  void addRelic(String name) {
+    relics.add(name);
+  }
+
   void _applyLevelUp() {
     maxHp += 15;
     attack += 4;
@@ -135,6 +168,7 @@ class Character {
     for (final skill in skills) {
       skill.currentCooldown = 0;
     }
+    statuses.clear();
   }
 
 }
@@ -144,6 +178,7 @@ enum DamageType {
   fire,
   ice,
   magic,
+  poison,
 }
 
 class DamageEvent {

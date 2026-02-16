@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import '../domain/character/character.dart';
+import '../domain/character/status_effect.dart';
 import '../domain/skills/basic_skills.dart';
 import '../domain/skills/skill.dart';
 import 'components/battle_character_component.dart';
@@ -12,6 +13,8 @@ import 'components/floating_text_component.dart';
 import 'components/frost_overlay_component.dart';
 import 'components/projectile_component.dart';
 import 'components/ring_effect_component.dart';
+import 'components/battle_background_component.dart';
+import 'sound/sound_manager.dart';
 
 class BattlerGame extends FlameGame {
   final Character player;
@@ -30,7 +33,7 @@ class BattlerGame extends FlameGame {
 
   late BattleCharacterComponent playerComponent;
   late List<BattleCharacterComponent> enemyComponents;
-  SpriteComponent? backgroundComponent;
+  BattleBackgroundComponent? backgroundComponent;
 
   static const double _attackWindUp = 0.35;
   static const double _attackRecovery = 0.15;
@@ -58,6 +61,10 @@ class BattlerGame extends FlameGame {
   final math.Random _rng = math.Random();
   final List<_TimedEffect> _timedEffects = [];
   final List<_DelayedAction> _delayedActions = [];
+  final List<String> _combatLog = [];
+  final Map<Character, int> _attackCounts = {};
+  final Set<Character> _berserked = {};
+  final Set<Character> _phaseTwo = {};
 
   BattlerGame({
     required this.player,
@@ -74,23 +81,16 @@ class BattlerGame extends FlameGame {
     return null;
   }
 
+  List<String> get combatLog => List.unmodifiable(_combatLog);
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
     images.prefix = 'assets/';
+    await SoundManager.init();
 
-    final backgroundImage = await images.load(
-      'backgrounds/battlefield.jpg',
-    );
-
-    backgroundComponent = SpriteComponent(
-      sprite: Sprite(backgroundImage),
-      position: size / 2,
-      size: size.clone(),
-      anchor: Anchor.center,
-      priority: -10,
-    );
+    backgroundComponent = BattleBackgroundComponent()..priority = -10;
 
     add(backgroundComponent!);
 
@@ -144,11 +144,6 @@ class BattlerGame extends FlameGame {
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    if (backgroundComponent != null && backgroundComponent!.isMounted) {
-      backgroundComponent!
-        ..size = size.clone()
-        ..position = size / 2;
-    }
     _layoutEnemyComponents();
   }
 
@@ -184,6 +179,7 @@ class BattlerGame extends FlameGame {
     battleTime += dt;
     _updateSkillCooldowns(dt);
     _updateDelayedActions(dt);
+    _checkEnemyPhases();
     _turnGapTimer = (_turnGapTimer - dt).clamp(0.0, _turnGap);
 
     if (_activeAttack != null) {
@@ -225,11 +221,13 @@ class BattlerGame extends FlameGame {
         skill.tick();
       }
       player.regenMana(_manaRegenPerTick);
+      player.tickStatuses();
       for (final enemy in enemies) {
         for (final skill in enemy.skills) {
           skill.tick();
         }
         enemy.regenMana(_manaRegenPerTick);
+        enemy.tickStatuses();
       }
       _tickEffects();
     }
@@ -356,9 +354,11 @@ class BattlerGame extends FlameGame {
 
     final casterComponent = _componentFor(caster);
     final targetComponent = _componentFor(target);
+    _logEvent('${caster.name} usou ${skill.name}');
 
     if (skill is FireballSkill) {
       _spawnFireball(casterComponent, targetComponent);
+      SoundManager.playSkill();
       caster.spendMana(skill.manaCost);
       skill.currentCooldown = skill.cooldown;
     } else if (skill is FreezeSkill) {
@@ -368,31 +368,39 @@ class BattlerGame extends FlameGame {
         source: caster,
         type: DamageType.ice,
       );
+      SoundManager.playSkill();
       caster.spendMana(skill.manaCost);
       skill.currentCooldown = skill.cooldown;
     } else if (skill is WarCrySkill) {
       _spawnWarCry(casterComponent);
       _applyWarCry(caster);
+      SoundManager.playSkill();
       skill.currentCooldown = skill.cooldown;
     } else if (skill is SureShotSkill) {
       _spawnSureShotCharge(casterComponent);
       _scheduleSureShot(casterComponent, targetComponent);
+      SoundManager.playSkill();
       caster.spendMana(skill.manaCost);
       skill.currentCooldown = skill.cooldown;
     } else if (skill is ShieldSkill) {
       _spawnShield(casterComponent);
       skill.activate(caster, target);
+      SoundManager.playSkill();
     } else if (skill is TauntSkill) {
       _spawnTaunt(targetComponent);
       skill.activate(caster, target);
+      SoundManager.playSkill();
     } else if (skill is RapidShotSkill) {
       _spawnRapidShot(casterComponent, targetComponent);
       skill.activate(caster, target);
+      SoundManager.playSkill();
     } else if (skill is FocusSkill) {
       _spawnFocus(casterComponent);
       skill.activate(caster, target);
+      SoundManager.playSkill();
     } else {
       skill.activate(caster, target);
+      SoundManager.playSkill();
     }
     onBattleTick?.call();
     _notifyUi();
@@ -418,9 +426,15 @@ class BattlerGame extends FlameGame {
         text: text,
         position: position,
         color: color,
-        fontSize: 22,
+        fontSize: 26,
       ),
     );
+
+    if (!event.isMiss) {
+      SoundManager.playHit();
+    }
+
+    _logDamage(event);
   }
 
   Color _colorForDamageType(DamageType type) {
@@ -433,6 +447,8 @@ class BattlerGame extends FlameGame {
         return const Color(0xFF9E9E9E);
       case DamageType.magic:
         return const Color(0xFF7E57C2);
+      case DamageType.poison:
+        return const Color(0xFF66BB6A);
     }
   }
 
@@ -462,12 +478,30 @@ class BattlerGame extends FlameGame {
     BattleCharacterComponent attacker,
     BattleCharacterComponent defender,
   ) {
+    _recordAttack(attacker.character);
     if (_isDragon(attacker.character)) {
       _spawnDragonFire(attacker, defender);
       return;
     }
 
     if (_isArcher(attacker.character)) {
+      final isGoblinArcher = !attacker.isPlayer && attacker.character.name == 'Goblin Arqueiro';
+      if (isGoblinArcher && (_attackCounts[attacker.character] ?? 0) % 3 == 0) {
+        _spawnArrowProjectile(
+          attacker: attacker,
+          defender: defender,
+          damage: (attacker.character.attack * 0.8).round(),
+          isCrit: false,
+        );
+        _spawnArrowProjectile(
+          attacker: attacker,
+          defender: defender,
+          damage: (attacker.character.attack * 0.8).round(),
+          isCrit: false,
+        );
+        return;
+      }
+
       final isCrit = _rng.nextDouble() < _archerLuckyShotChance;
       final multiplier = isCrit ? _archerCritMultiplier : 1.0;
       _spawnArrowProjectile(
@@ -486,6 +520,7 @@ class BattlerGame extends FlameGame {
 
     attacker.character.attackTarget(defender.character);
     defender.hitFlash = 0.15;
+    _maybeApplyEnemyControl(attacker, defender);
   }
 
   void _spawnArrowProjectile({
@@ -516,6 +551,7 @@ class BattlerGame extends FlameGame {
             type: DamageType.physical,
             isCritical: isCrit,
           );
+          _maybeApplyEnemyControl(attacker, defender);
         },
       ),
     );
@@ -545,6 +581,7 @@ class BattlerGame extends FlameGame {
             source: attacker.character,
             type: DamageType.magic,
           );
+          _maybeApplyEnemyControl(attacker, defender);
         },
       ),
     );
@@ -624,6 +661,8 @@ class BattlerGame extends FlameGame {
   }
 
   void _spawnFreeze(BattleCharacterComponent target) {
+    target.character.addStatus(StatusType.freeze, 2);
+    _notifyUi();
     add(
       FrostOverlayComponent(
         position: target.position.clone(),
@@ -644,6 +683,8 @@ class BattlerGame extends FlameGame {
   }
 
   void _spawnWarCry(BattleCharacterComponent caster) {
+    caster.character.addStatus(StatusType.warcry, 3);
+    _notifyUi();
     add(
       RingEffectComponent(
         position: caster.position.clone(),
@@ -726,6 +767,8 @@ class BattlerGame extends FlameGame {
     required int ticks,
   }) {
     if (totalDamage <= 0 || ticks <= 0) return;
+    target.addStatus(StatusType.burn, ticks);
+    _notifyUi();
     final base = totalDamage ~/ ticks;
     final remainder = totalDamage % ticks;
     var index = 0;
@@ -762,6 +805,195 @@ class BattlerGame extends FlameGame {
         },
       ),
     );
+  }
+
+  void _applyPoison({
+    required Character target,
+    required Character source,
+    required int totalDamage,
+    required int ticks,
+  }) {
+    if (totalDamage <= 0 || ticks <= 0) return;
+    target.addStatus(StatusType.poison, ticks);
+    _notifyUi();
+    final base = totalDamage ~/ ticks;
+    final remainder = totalDamage % ticks;
+    var index = 0;
+    _timedEffects.add(
+      _TimedEffect(
+        remainingTicks: ticks,
+        onTick: () {
+          final damage = base + (index < remainder ? 1 : 0);
+          index += 1;
+          target.takeDamage(
+            damage,
+            source: source,
+            type: DamageType.poison,
+          );
+        },
+      ),
+    );
+  }
+
+  void _maybeApplyEnemyControl(
+    BattleCharacterComponent attacker,
+    BattleCharacterComponent defender,
+  ) {
+    if (attacker.isPlayer) return;
+    final enemy = attacker.character;
+    if (enemy.name == 'Bruxa' || enemy.name == 'Bruxa Ancia') {
+      if (defender.character.statuses.containsKey(StatusType.hex)) return;
+      if (_rng.nextDouble() < 0.35) {
+        defender.character.addStatus(StatusType.hex, 3);
+        defender.character.attack = (defender.character.attack - 2).clamp(1, 9999);
+        _notifyUi();
+        _timedEffects.add(
+          _TimedEffect(
+            remainingTicks: 3,
+            onEnd: () {
+              defender.character.attack += 2;
+              defender.character.clearStatus(StatusType.hex);
+            },
+          ),
+        );
+        add(
+          FloatingTextComponent(
+            text: 'Maldição',
+            position: Vector2(
+              defender.position.x,
+              defender.position.y - defender.size.y / 2 - 48,
+            ),
+            color: const Color(0xFF9575CD),
+            fontSize: 20,
+            duration: 0.8,
+          ),
+        );
+      }
+    }
+
+    if (enemy.name == 'Mago Esqueleto Sombrio') {
+      if ((_attackCounts[enemy] ?? 0) % 4 == 0) {
+        _spawnFreeze(defender);
+        defender.character.takeDamage(
+          (enemy.attack * 0.6).round(),
+          source: enemy,
+          type: DamageType.ice,
+        );
+      }
+    }
+
+    if (enemy.name == 'Aranha do Vazio') {
+      if (_rng.nextDouble() < 0.4) {
+        _applyPoison(
+          target: defender.character,
+          source: enemy,
+          totalDamage: (enemy.attack * 0.9).round(),
+          ticks: 3,
+        );
+      }
+    }
+  }
+
+  void _recordAttack(Character attacker) {
+    _attackCounts[attacker] = (_attackCounts[attacker] ?? 0) + 1;
+  }
+
+  void _checkEnemyPhases() {
+    for (final enemy in enemies) {
+      if (!enemy.isAlive) continue;
+      if (enemy.name == 'Orc Sanguinario' && !_berserked.contains(enemy)) {
+        if (enemy.hp <= (enemy.maxHp * 0.5)) {
+          _berserked.add(enemy);
+          enemy.attackSpeedMultiplier *= 1.3;
+          enemy.attack += 5;
+          enemy.addStatus(StatusType.berserk, 6);
+          final component = _componentFor(enemy);
+          add(
+            FloatingTextComponent(
+              text: 'Fúria!',
+              position: Vector2(
+                component.position.x,
+                component.position.y - component.size.y / 2 - 50,
+              ),
+              color: const Color(0xFFFF5252),
+              fontSize: 20,
+              duration: 0.9,
+            ),
+          );
+          _notifyUi();
+        }
+      }
+
+      if (enemy.name == 'Dragao' && !_phaseTwo.contains(enemy)) {
+        if (enemy.hp <= (enemy.maxHp * 0.5)) {
+          _phaseTwo.add(enemy);
+          enemy.attackSpeedMultiplier *= 1.4;
+          enemy.attack += 8;
+          enemy.addStatus(StatusType.enraged, 6);
+          final component = _componentFor(enemy);
+          add(
+            RingEffectComponent(
+              position: component.position.clone(),
+              color: const Color(0xFFFF7043),
+              startRadius: 18,
+              endRadius: 68,
+              duration: 0.6,
+              strokeWidth: 5,
+            ),
+          );
+          add(
+            FloatingTextComponent(
+              text: 'Chamas!',
+              position: Vector2(
+                component.position.x,
+                component.position.y - component.size.y / 2 - 52,
+              ),
+              color: const Color(0xFFFF7043),
+              fontSize: 22,
+              duration: 0.9,
+            ),
+          );
+          _notifyUi();
+        }
+      }
+    }
+  }
+
+  void _logDamage(DamageEvent event) {
+    final source = event.source?.name ?? 'Desconhecido';
+    final target = event.target.name;
+    if (event.isMiss) {
+      _logEvent('$source errou $target');
+      return;
+    }
+    final type = _labelForDamage(event.damageType);
+    final crit = event.isCritical ? ' CRIT' : '';
+    _logEvent('$source causou ${event.amount} $type em $target$crit');
+  }
+
+  String _labelForDamage(DamageType type) {
+    switch (type) {
+      case DamageType.physical:
+        return 'fisico';
+      case DamageType.fire:
+        return 'fogo';
+      case DamageType.ice:
+        return 'gelo';
+      case DamageType.magic:
+        return 'magia';
+      case DamageType.poison:
+        return 'veneno';
+    }
+  }
+
+  void _logEvent(String message) {
+    if (message.trim().isEmpty) return;
+    _combatLog.insert(0, message);
+    if (_combatLog.length > 6) {
+      _combatLog.removeLast();
+    }
+    onBattleTick?.call();
+    _notifyUi();
   }
 
   void _updateDelayedActions(double dt) {

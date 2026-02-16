@@ -19,20 +19,36 @@ class SkillButton extends StatelessWidget {
     final cooldown = skill.currentCooldown;
     return ElevatedButton(
       onPressed: skill.canUse(caster) ? onPressed : null,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(skill.name),
-          if (cooldown > 0)
-            Text(
-              'CD ${cooldown}s',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFFFD54F),
+      child: SizedBox(
+        width: 110,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(skill.name, textAlign: TextAlign.center),
+            if (cooldown > 0)
+              Text(
+                'CD ${cooldown}s',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFFFD54F),
+                ),
               ),
-            ),
-        ],
+            if (cooldown > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: cooldown / skill.cooldown,
+                    minHeight: 5,
+                    backgroundColor: const Color(0xFF1B2A3A),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFFD54F)),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

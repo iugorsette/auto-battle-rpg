@@ -25,6 +25,26 @@ class _BattleSelectScreenState extends State<BattleSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final panelDecoration = BoxDecoration(
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xCC0F1B2A),
+          Color(0xCC1A2B3F),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFF2E445F)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x55000000),
+          blurRadius: 8,
+          offset: Offset(0, 3),
+        ),
+      ],
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Escolha uma batalha'),
@@ -44,15 +64,34 @@ class _BattleSelectScreenState extends State<BattleSelectScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            player.name,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          XpBar(
-            level: player.progression.level,
-            xp: player.progression.xp,
-            xpToNext: player.progression.xpToNext(),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: panelDecoration,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  player.name,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                XpBar(
+                  level: player.progression.level,
+                  xp: player.progression.xp,
+                  xpToNext: player.progression.xpToNext(),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'HP ${player.maxHp}  ATK ${player.attack}  DEF ${player.defense}  SPD ${player.speed}  MP ${player.maxMana}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'DPS estimado: ${_estimateDps(player).toStringAsFixed(1)}',
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           ...options.map((option) {
@@ -103,5 +142,11 @@ class _BattleSelectScreenState extends State<BattleSelectScreen> {
         ],
       ),
     );
+  }
+
+  double _estimateDps(Character character) {
+    final speedFactor = (1 + character.speed * 0.25) * character.attackSpeedMultiplier;
+    final cooldown = (3.0 / speedFactor).clamp(1.5, 5.0);
+    return character.attack / cooldown;
   }
 }

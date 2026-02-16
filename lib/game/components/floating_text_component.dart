@@ -7,8 +7,8 @@ class FloatingTextComponent extends PositionComponent {
     required String text,
     required Vector2 position,
     required Color color,
-    double duration = 0.9,
-    double fontSize = 22,
+    double duration = 1.0,
+    double fontSize = 26,
   })  : _text = text,
         _baseColor = color,
         _duration = duration,
@@ -25,12 +25,20 @@ class FloatingTextComponent extends PositionComponent {
   double _remaining;
   final double _fontSize;
 
-  final Vector2 _velocity = Vector2(0, -70);
+  late final Vector2 _velocity = Vector2(_drift, -90);
+  final double _drift = (0.5 - (DateTime.now().microsecond % 1000) / 1000) * 18;
   late final TextPaint _textPaint = TextPaint(
     style: TextStyle(
       color: _baseColor,
       fontSize: _fontSize,
       fontWeight: FontWeight.bold,
+      shadows: const [
+        Shadow(
+          blurRadius: 6,
+          color: Color(0xCC000000),
+          offset: Offset(0, 2),
+        ),
+      ],
     ),
   );
 
@@ -50,15 +58,14 @@ class FloatingTextComponent extends PositionComponent {
   void render(Canvas canvas) {
     final progress = (_remaining / _duration).clamp(0.0, 1.0);
     final opacity = 0.2 + 0.8 * progress;
+    final scale = 1.15 - (1 - progress) * 0.15;
     final textPaint = _textPaint.copyWith(
       (style) => style.copyWith(color: _baseColor.withOpacity(opacity)),
     );
 
-    textPaint.render(
-      canvas,
-      _text,
-      Vector2.zero(),
-      anchor: Anchor.center,
-    );
+    canvas.save();
+    canvas.scale(scale, scale);
+    textPaint.render(canvas, _text, Vector2.zero(), anchor: Anchor.center);
+    canvas.restore();
   }
 }

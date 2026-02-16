@@ -11,6 +11,18 @@ class CharacterRosterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roster = context.watch<PlayerRoster>();
+    final panelDecoration = BoxDecoration(
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xCC0F1B2A),
+          Color(0xCC1A2B3F),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFF2E445F)),
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Seus Personagens')),
@@ -28,6 +40,7 @@ class CharacterRosterScreen extends StatelessWidget {
             return _CharacterCard(
               character: character,
               slot: index,
+              decoration: panelDecoration,
               onSelect: () {
                 character.resetForBattle();
                 Navigator.pushNamed(
@@ -59,47 +72,53 @@ class _CharacterCard extends StatelessWidget {
   final Character character;
   final int slot;
   final VoidCallback onSelect;
+  final BoxDecoration decoration;
 
   const _CharacterCard({
     required this.character,
     required this.slot,
     required this.onSelect,
+    required this.decoration,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${character.name} (Slot $slot)',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      decoration: decoration,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${character.name} (Slot $slot)',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'HP: ${character.maxHp}  ATK: ${character.attack}  DEF: ${character.defense}  SPD: ${character.speed}  MP: ${character.maxMana}',
+            style: const TextStyle(fontSize: 12),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Relics: ${character.relics.length}',
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          ),
+          const SizedBox(height: 12),
+          XpBar(
+            level: character.progression.level,
+            xp: character.progression.xp,
+            xpToNext: character.progression.xpToNext(),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: onSelect,
+              child: const Text('Selecionar'),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'HP: ${character.maxHp}  ATK: ${character.attack}  DEF: ${character.defense}  SPD: ${character.speed}  MP: ${character.maxMana}',
-              style: const TextStyle(fontSize: 12),
-            ),
-            const SizedBox(height: 12),
-            XpBar(
-              level: character.progression.level,
-              xp: character.progression.xp,
-              xpToNext: character.progression.xpToNext(),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: onSelect,
-                child: const Text('Selecionar'),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

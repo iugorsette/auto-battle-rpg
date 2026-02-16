@@ -13,6 +13,18 @@ class CharacterCreateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roster = context.watch<PlayerRoster>();
+    final panelDecoration = BoxDecoration(
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xCC0F1B2A),
+          Color(0xCC1A2B3F),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFF2E445F)),
+    );
     final classes = [
       _ClassInfo(
         classFactory: KnightClass(),
@@ -40,42 +52,41 @@ class CharacterCreateScreen extends StatelessWidget {
           const SizedBox(height: 12),
           ...classes.map((info) {
             final preview = info.classFactory.create();
-            return Card(
+            return Container(
               margin: const EdgeInsets.only(bottom: 12),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      info.classFactory.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+              decoration: panelDecoration,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    info.classFactory.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 6),
-                    Text(info.description),
-                    const SizedBox(height: 10),
-                    Text(
-                      'HP: ${preview.maxHp}  ATK: ${preview.attack}  DEF: ${preview.defense}  SPD: ${preview.speed}  MP: ${preview.maxMana}',
-                      style: const TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(info.description),
+                  const SizedBox(height: 10),
+                  Text(
+                    'HP: ${preview.maxHp}  ATK: ${preview.attack}  DEF: ${preview.defense}  SPD: ${preview.speed}  MP: ${preview.maxMana}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: roster.characters.length >= roster.maxCharacters
+                          ? null
+                          : () {
+                              roster.add(info.classFactory.create());
+                              Navigator.pop(context);
+                            },
+                      child: const Text('Criar'),
                     ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton(
-                        onPressed: roster.characters.length >= roster.maxCharacters
-                            ? null
-                            : () {
-                                roster.add(info.classFactory.create());
-                                Navigator.pop(context);
-                              },
-                        child: const Text('Criar'),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           }),
