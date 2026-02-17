@@ -18,6 +18,7 @@ class MageClass implements CharacterClass {
       skills: [
         FireballSkill(),
         FreezeSkill(),
+        IncinerateSkill(),
       ],
     );
   }

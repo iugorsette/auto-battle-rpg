@@ -215,7 +215,11 @@ class _BattleScreenState extends State<BattleScreen> {
                     alignment: WrapAlignment.center,
                     spacing: 8,
                     runSpacing: 8,
-                    children: game.player.skills.map((skill) {
+                    children: game.player.skills
+                        .where(
+                          (skill) => skill.minLevel <= game.player.progression.level,
+                        )
+                        .map((skill) {
                       return SkillButton(
                         skill: skill,
                         caster: game.player,

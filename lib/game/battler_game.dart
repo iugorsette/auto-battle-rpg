@@ -48,6 +48,15 @@ class BattlerGame extends FlameGame {
   static const double _dragonWindUp = 0.3;
   static const double _dragonFireTravelTime = 0.25;
   static const int _manaRegenPerTick = 8;
+  static const double _spinMultiplier = 1.15;
+  static const double _arrowRainDamageMultiplier = 0.6;
+  static const int _arrowRainWaves = 3;
+  static const double _arrowRainInterval = 1.0;
+  static const double _arrowRainDropHeight = 160;
+  static const double _incinerateTotalMultiplier = 1.8;
+  static const double _incinerateSpreadMultiplier = 1.2;
+  static const int _incinerateTicks = 3;
+  static const double _incinerateWindow = 3.0;
 
   double battleTime = 0;
   double _skillTickTimer = 0;
@@ -65,6 +74,7 @@ class BattlerGame extends FlameGame {
   final Map<Character, int> _attackCounts = {};
   final Set<Character> _berserked = {};
   final Set<Character> _phaseTwo = {};
+  final Map<Character, _IncinerateMark> _incinerateMarks = {};
 
   BattlerGame({
     required this.player,
@@ -371,9 +381,18 @@ class BattlerGame extends FlameGame {
       SoundManager.playSkill();
       caster.spendMana(skill.manaCost);
       skill.currentCooldown = skill.cooldown;
+    } else if (skill is IncinerateSkill) {
+      _castIncinerate(casterComponent, targetComponent);
+      SoundManager.playSkill();
+      caster.spendMana(skill.manaCost);
+      skill.currentCooldown = skill.cooldown;
     } else if (skill is WarCrySkill) {
       _spawnWarCry(casterComponent);
       _applyWarCry(caster);
+      SoundManager.playSkill();
+      skill.currentCooldown = skill.cooldown;
+    } else if (skill is SwordSpinSkill) {
+      _castSwordSpin(casterComponent);
       SoundManager.playSkill();
       skill.currentCooldown = skill.cooldown;
     } else if (skill is SureShotSkill) {
@@ -381,6 +400,10 @@ class BattlerGame extends FlameGame {
       _scheduleSureShot(casterComponent, targetComponent);
       SoundManager.playSkill();
       caster.spendMana(skill.manaCost);
+      skill.currentCooldown = skill.cooldown;
+    } else if (skill is ArrowRainSkill) {
+      _castArrowRain(casterComponent, targetComponent);
+      SoundManager.playSkill();
       skill.currentCooldown = skill.cooldown;
     } else if (skill is ShieldSkill) {
       _spawnShield(casterComponent);
@@ -435,6 +458,10 @@ class BattlerGame extends FlameGame {
     }
 
     _logDamage(event);
+
+    if (!event.isMiss && !event.target.isAlive) {
+      _checkIncinerateSpread(event.target);
+    }
   }
 
   Color _colorForDamageType(DamageType type) {
@@ -789,6 +816,42 @@ class BattlerGame extends FlameGame {
     );
   }
 
+  void _checkIncinerateSpread(Character target) {
+    final mark = _incinerateMarks.remove(target);
+    if (mark == null) return;
+    if (battleTime > mark.expiresAt) return;
+    _spreadIncinerate(mark.source);
+  }
+
+  void _spreadIncinerate(Character source) {
+    final targets = enemyComponents
+        .where((enemy) => enemy.character.isAlive)
+        .toList();
+    if (targets.isEmpty) return;
+
+    final totalDamage = (source.attack * _incinerateSpreadMultiplier).round();
+    for (final enemy in targets) {
+      _applyBurn(
+        target: enemy.character,
+        source: source,
+        totalDamage: totalDamage,
+        ticks: _incinerateTicks,
+      );
+      add(
+        RingEffectComponent(
+          position: enemy.position.clone(),
+          color: const Color(0xFFFF7043),
+          startRadius: 10,
+          endRadius: 46,
+          duration: 0.45,
+          strokeWidth: 3,
+        ),
+      );
+    }
+
+    _logEvent('Incinerar espalhou!');
+  }
+
   void _applyWarCry(Character caster) {
     caster.attackSpeedMultiplier *= 2;
 
@@ -1076,6 +1139,164 @@ class BattlerGame extends FlameGame {
     );
   }
 
+  void _castSwordSpin(BattleCharacterComponent caster) {
+    add(
+      RingEffectComponent(
+        position: caster.position.clone(),
+        color: const Color(0xFFB0BEC5),
+        startRadius: 14,
+        endRadius: 72,
+        duration: 0.45,
+        strokeWidth: 4,
+      ),
+    );
+
+    add(
+      RingEffectComponent(
+        position: caster.position.clone(),
+        color: const Color(0xFFFFD54F),
+        startRadius: 8,
+        endRadius: 52,
+        duration: 0.3,
+        strokeWidth: 2.5,
+      ),
+    );
+
+    final damage = (caster.character.attack * _spinMultiplier).round();
+    for (final enemy in enemyComponents) {
+      if (!enemy.character.isAlive) continue;
+      enemy.hitFlash = 0.15;
+      enemy.character.takeDamage(
+        damage,
+        source: caster.character,
+        type: DamageType.physical,
+      );
+    }
+  }
+
+  void _castArrowRain(
+    BattleCharacterComponent caster,
+    BattleCharacterComponent target,
+  ) {
+    final center = target.position.clone();
+    add(
+      RingEffectComponent(
+        position: center,
+        color: const Color(0xFF90A4AE),
+        startRadius: 18,
+        endRadius: 88,
+        duration: 0.55,
+        strokeWidth: 3,
+      ),
+    );
+
+    for (var wave = 0; wave < _arrowRainWaves; wave++) {
+      _delayedActions.add(
+        _DelayedAction(
+          delay: wave * _arrowRainInterval,
+          action: () {
+            if (!caster.character.isAlive) return;
+            final damage = (caster.character.attack * _arrowRainDamageMultiplier).round();
+            final targets = enemyComponents
+                .where((enemy) => enemy.character.isAlive)
+                .toList();
+            if (targets.isEmpty) return;
+
+            add(
+              RingEffectComponent(
+                position: center,
+                color: const Color(0xFFB0BEC5),
+                startRadius: 12,
+                endRadius: 76,
+                duration: 0.35,
+                strokeWidth: 2.5,
+              ),
+            );
+
+            for (final enemy in targets) {
+              final end = enemy.position.clone();
+              final offsetX = (_rng.nextDouble() * 80) - 40;
+              final offsetY = (_rng.nextDouble() * 20) - 10;
+              final start = Vector2(
+                end.x + offsetX,
+                end.y - _arrowRainDropHeight + offsetY,
+              );
+              add(
+                ProjectileComponent(
+                  start: start,
+                  end: end,
+                  duration: 0.35,
+                  color: const Color(0xFFB0BEC5),
+                  radius: 5.5,
+                  isArrow: true,
+                  onHit: () {
+                    if (!enemy.character.isAlive) return;
+                    enemy.hitFlash = 0.15;
+                    enemy.character.takeDamage(
+                      damage,
+                      source: caster.character,
+                      type: DamageType.physical,
+                    );
+                  },
+                ),
+              );
+            }
+          },
+        ),
+      );
+    }
+  }
+
+  void _castIncinerate(
+    BattleCharacterComponent caster,
+    BattleCharacterComponent target,
+  ) {
+    add(
+      RingEffectComponent(
+        position: target.position.clone(),
+        color: const Color(0xFFFF7043),
+        startRadius: 14,
+        endRadius: 64,
+        duration: 0.55,
+        strokeWidth: 4,
+      ),
+    );
+
+    add(
+      FloatingTextComponent(
+        text: 'Incinerar!',
+        position: Vector2(target.position.x, target.position.y - target.size.y / 2 - 50),
+        color: const Color(0xFFFF7043),
+        fontSize: 20,
+        duration: 0.8,
+      ),
+    );
+
+    final totalDamage = (caster.character.attack * _incinerateTotalMultiplier).round();
+    _applyBurn(
+      target: target.character,
+      source: caster.character,
+      totalDamage: totalDamage,
+      ticks: _incinerateTicks,
+    );
+
+    final mark = _IncinerateMark(
+      source: caster.character,
+      expiresAt: battleTime + _incinerateWindow,
+    );
+    _incinerateMarks[target.character] = mark;
+    _delayedActions.add(
+      _DelayedAction(
+        delay: _incinerateWindow,
+        action: () {
+          if (_incinerateMarks[target.character] == mark) {
+            _incinerateMarks.remove(target.character);
+          }
+        },
+      ),
+    );
+  }
+
   void _spawnFocus(BattleCharacterComponent caster) {
     add(
       RingEffectComponent(
@@ -1163,4 +1384,14 @@ class _DelayedAction {
 
   double remaining;
   final VoidCallback action;
+}
+
+class _IncinerateMark {
+  const _IncinerateMark({
+    required this.source,
+    required this.expiresAt,
+  });
+
+  final Character source;
+  final double expiresAt;
 }

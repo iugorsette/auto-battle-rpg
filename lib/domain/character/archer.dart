@@ -16,6 +16,7 @@ class ArcherClass implements CharacterClass {
       speed: 2,
       skills: [
         SureShotSkill(),
+        ArrowRainSkill(),
       ],
     );
   }

@@ -16,6 +16,7 @@ class KnightClass implements CharacterClass {
       speed: 1,
       skills: [
         WarCrySkill(),
+        SwordSpinSkill(),
       ],
     );
   }

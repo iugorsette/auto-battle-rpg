@@ -13,6 +13,18 @@ class FireballSkill extends Skill {
   }
 }
 
+class IncinerateSkill extends Skill {
+  IncinerateSkill() : super(6, manaCost: 35, minLevel: 4);
+
+  @override
+  String get name => 'Incinerar';
+
+  @override
+  void activate(Character caster, Character target) {
+    currentCooldown = cooldown;
+  }
+}
+
 class ShieldSkill extends Skill {
   ShieldSkill() : super(4);
 
@@ -22,6 +34,18 @@ class ShieldSkill extends Skill {
   @override
   void activate(Character caster, Character target) {
     caster.defense += 10;
+    currentCooldown = cooldown;
+  }
+}
+
+class SwordSpinSkill extends Skill {
+  SwordSpinSkill() : super(6, minLevel: 4);
+
+  @override
+  String get name => 'Giro da Espada';
+
+  @override
+  void activate(Character caster, Character target) {
     currentCooldown = cooldown;
   }
 }
@@ -49,6 +73,18 @@ class SureShotSkill extends Skill {
 
   @override
   String get name => 'Tiro Certo';
+
+  @override
+  void activate(Character caster, Character target) {
+    currentCooldown = cooldown;
+  }
+}
+
+class ArrowRainSkill extends Skill {
+  ArrowRainSkill() : super(6, minLevel: 4);
+
+  @override
+  String get name => 'Chuva de Flechas';
 
   @override
   void activate(Character caster, Character target) {
