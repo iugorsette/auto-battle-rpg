@@ -1,11 +1,11 @@
 # Personagens
 
 ## Classes Jogáveis
-| Classe | HP | ATK | DEF | SPD | Mana | Skills iniciais |
-| --- | --- | --- | --- | --- | --- | --- |
-| Cavaleiro | 150 | 30 | 15 | 1 | 0 | Grito de Guerra, Giro da Espada (Nv 4) |
-| Mago | 90 | 25 | 5 | 1 | 100 | Bola de Fogo, Congelar, Incinerar (Nv 4) |
-| Arqueiro | 110 | 25 | 8 | 2 | 0 | Tiro Certo, Chuva de Flechas (Nv 4) |
+| Imagem | Classe | HP | ATK | DEF | SPD | Mana | Skills iniciais |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| <img src="../assets/characters/knight.png" width="64" /> | Cavaleiro | 150 | 30 | 15 | 1 | 0 | Grito de Guerra, Giro da Espada (Nv 4) |
+| <img src="../assets/characters/mage.png" width="64" /> | Mago | 90 | 25 | 5 | 1 | 100 | Bola de Fogo, Congelar, Incinerar (Nv 4) |
+| <img src="../assets/characters/archer.png" width="64" /> | Arqueiro | 110 | 25 | 8 | 2 | 0 | Tiro Certo, Chuva de Flechas (Nv 4) |
 
 ## Habilidades
 **Bola de Fogo**

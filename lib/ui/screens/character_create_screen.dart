@@ -8,6 +8,8 @@ import '../../state/player_roster.dart';
 import '../../domain/character/character_class.dart';
 import '../../game/sound/sound_manager.dart';
 import '../widgets/character_portrait.dart';
+import '../../domain/skills/skill.dart';
+import '../../domain/skills/basic_skills.dart';
 
 class CharacterCreateScreen extends StatefulWidget {
   const CharacterCreateScreen({super.key});
@@ -95,6 +97,27 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
                               'HP: ${preview.maxHp}  ATK: ${preview.attack}  DEF: ${preview.defense}  SPD: ${preview.speed}  MP: ${preview.maxMana}',
                               style: const TextStyle(fontSize: 12),
                             ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Habilidades',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 6),
+                            ...preview.skills.map(
+                              (skill) {
+                                final info = _skillInfo(skill);
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: _SkillLine(
+                                    name: skill.name,
+                                    description: info.description,
+                                    cooldown: skill.cooldown,
+                                    mana: skill.manaCost,
+                                    minLevel: skill.minLevel,
+                                  ),
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -132,4 +155,96 @@ class _ClassInfo {
     required this.classFactory,
     required this.description,
   });
+}
+
+_SkillInfo _skillInfo(Skill skill) {
+  if (skill is FireballSkill) {
+    return const _SkillInfo('Projétil que causa dano total ATK * 2 (70% instantâneo + queimadura).');
+  }
+  if (skill is FreezeSkill) {
+    return const _SkillInfo('Aplica Congelar por 2 ticks e causa dano mágico igual ao ATK.');
+  }
+  if (skill is IncinerateSkill) {
+    return const _SkillInfo('Queimadura por 3 ticks (ATK * 1.8). Espalha se o alvo morrer em 3s.');
+  }
+  if (skill is WarCrySkill) {
+    return const _SkillInfo('Dobra a velocidade de ataque por 3 ticks e cura 10% HP por tick.');
+  }
+  if (skill is SwordSpinSkill) {
+    return const _SkillInfo('Ataque em área: ATK * 1.15 em todos os inimigos vivos.');
+  }
+  if (skill is SureShotSkill) {
+    return const _SkillInfo('Após 1s, dispara flecha crítica com ATK * 1.5.');
+  }
+  if (skill is ArrowRainSkill) {
+    return const _SkillInfo('3 ondas em 3s: cada uma causa ATK * 0.6 em todos os inimigos.');
+  }
+  if (skill is RapidShotSkill) {
+    return const _SkillInfo('Dispara duas flechas rápidas (visual).');
+  }
+  if (skill is ShieldSkill) {
+    return const _SkillInfo('Aumenta DEF em +10.');
+  }
+  if (skill is TauntSkill) {
+    return const _SkillInfo('Provoca o inimigo (efeito visual).');
+  }
+  if (skill is FocusSkill) {
+    return const _SkillInfo('Aumenta ATK em +5.');
+  }
+
+  return const _SkillInfo('Habilidade especial.');
+}
+
+class _SkillInfo {
+  final String description;
+
+  const _SkillInfo(this.description);
+}
+
+class _SkillLine extends StatelessWidget {
+  final String name;
+  final String description;
+  final int cooldown;
+  final int mana;
+  final int minLevel;
+
+  const _SkillLine({
+    required this.name,
+    required this.description,
+    required this.cooldown,
+    required this.mana,
+    required this.minLevel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final unlock = minLevel > 1 ? 'Nv $minLevel' : 'Inicial';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF132235),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF24364C)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$name ($unlock)',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            description,
+            style: const TextStyle(fontSize: 11, color: Colors.white70),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'CD ${cooldown}s  Mana $mana',
+            style: const TextStyle(fontSize: 11, color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
 }

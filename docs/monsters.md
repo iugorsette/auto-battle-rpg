@@ -1,17 +1,17 @@
 # Monstros
 
 ## Catálogo
-| Monstro | Nível | HP | ATK | DEF | SPD | Observações |
-| --- | --- | --- | --- | --- | --- | --- |
-| Goblin | 1 | 120 | 18 | 6 | 1 | Ataque físico padrão. |
-| Goblin Arqueiro | 2 | 95 | 20 | 5 | 2 | A cada 3 ataques, dispara duas flechas com 0.8x ATK cada. |
-| Orc Sanguinario | 3 | 170 | 30 | 10 | 1 | Entra em fúria ao chegar a 50% de HP. |
-| Aranha do Vazio | 3 | 115 | 24 | 6 | 3 | Chance de aplicar veneno. |
-| Guerreiro Esqueleto | 4 | 145 | 28 | 12 | 1 | Ataque físico padrão. |
-| Bruxa | 4 | 125 | 26 | 8 | 2 | Pode amaldiçoar o alvo. |
-| Bruxa Ancia | 5 | 155 | 34 | 10 | 2 | Pode amaldiçoar o alvo. |
-| Dragao | 6 | 320 | 45 | 18 | 1 | Sopro de fogo, fase 2 ao chegar a 50% de HP. |
-| Mago Esqueleto Sombrio | 7 | 200 | 50 | 14 | 2 | A cada 4 ataques, congela e causa dano de gelo. |
+| Imagem | Monstro | Nível | HP | ATK | DEF | SPD | Observações |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| <img src="../assets/characters/goblin.png" width="64" /> | Goblin | 1 | 120 | 18 | 6 | 1 | Ataque físico padrão. |
+| <img src="../assets/characters/goblin_archer.png" width="64" /> | Goblin Arqueiro | 2 | 95 | 20 | 5 | 2 | A cada 3 ataques, dispara duas flechas com 0.8x ATK cada. |
+| <img src="../assets/characters/orc_sanguinario.png" width="64" /> | Orc Sanguinario | 3 | 170 | 30 | 10 | 1 | Entra em fúria ao chegar a 50% de HP. |
+| <img src="../assets/characters/void_spider.png" width="64" /> | Aranha do Vazio | 3 | 115 | 24 | 6 | 3 | Chance de aplicar veneno. |
+| <img src="../assets/characters/skeleton_warrior.png" width="64" /> | Guerreiro Esqueleto | 4 | 145 | 28 | 12 | 1 | Ataque físico padrão. |
+| <img src="../assets/characters/witch.png" width="64" /> | Bruxa | 5 | 140 | 30 | 9 | 2 | Pode amaldiçoar o alvo. |
+| <img src="../assets/characters/witch_elder.png" width="64" /> | Bruxa Ancia | 6 | 190 | 42 | 14 | 2 | Bruxa experiente com maldição. |
+| <img src="../assets/characters/dragon.png" width="64" /> | Dragao | 6 | 320 | 45 | 18 | 1 | Sopro de fogo, fase 2 ao chegar a 50% de HP. |
+| <img src="../assets/characters/dark_skeleton_mage.png" width="64" /> | Mago Esqueleto Sombrio | 8 | 260 | 60 | 18 | 2 | Controle de gelo e alto dano. |
 
 ## Habilidades e Comportamentos Especiais
 **Bruxa / Bruxa Ancia**

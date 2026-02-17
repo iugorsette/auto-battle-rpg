@@ -38,7 +38,19 @@ class _CharacterRosterScreenState extends State<CharacterRosterScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Seus Personagens')),
+      appBar: AppBar(
+        title: const Text('Seus Personagens'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              SoundManager.playClick();
+              Navigator.pushNamed(context, '/bestiary');
+            },
+            icon: const Icon(Icons.menu_book),
+            tooltip: 'Livro dos Monstros',
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

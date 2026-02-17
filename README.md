@@ -5,6 +5,9 @@
 
 Jogo em Flutter + Flame com batalhas automáticas e habilidades ativas.
 
+## Créditos e Lore
+Todas as imagens foram geradas por IA pelo ChatGPT-5.2. Raetna é um anagrama de Renata (minha esposa) e Suigetto é um anagrama de iugorsette (meu nome). Em breve vou lançar a lore completa do jogo.
+
 ## Destaques
 - Batalha em tempo real com telegraph, projéteis e efeitos visuais.
 - Classes jogáveis: Cavaleiro, Mago e Arqueiro.
