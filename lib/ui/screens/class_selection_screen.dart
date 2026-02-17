@@ -2,9 +2,21 @@ import 'package:flutter/material.dart';
 import '../../domain/character/knight.dart';
 import '../../domain/character/mage.dart';
 import '../../domain/character/archer.dart';
+import '../../game/sound/sound_manager.dart';
 
-class ClassSelectionScreen extends StatelessWidget {
+class ClassSelectionScreen extends StatefulWidget {
   const ClassSelectionScreen({super.key});
+
+  @override
+  State<ClassSelectionScreen> createState() => _ClassSelectionScreenState();
+}
+
+class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    SoundManager.playIntro();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +33,7 @@ class ClassSelectionScreen extends StatelessWidget {
           return ListTile(
             title: Text(c.name),
             onTap: () {
+              SoundManager.playClick();
               Navigator.pushNamed(
                 context,
                 '/battle',

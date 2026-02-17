@@ -4,9 +4,21 @@ import 'package:provider/provider.dart';
 import '../../domain/character/character.dart';
 import '../../state/player_roster.dart';
 import '../widgets/xp_bar.dart';
+import '../../game/sound/sound_manager.dart';
 
-class CharacterRosterScreen extends StatelessWidget {
+class CharacterRosterScreen extends StatefulWidget {
   const CharacterRosterScreen({super.key});
+
+  @override
+  State<CharacterRosterScreen> createState() => _CharacterRosterScreenState();
+}
+
+class _CharacterRosterScreenState extends State<CharacterRosterScreen> {
+  @override
+  void initState() {
+    super.initState();
+    SoundManager.playIntro();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,11 +54,12 @@ class CharacterRosterScreen extends StatelessWidget {
               slot: index,
               decoration: panelDecoration,
               onSelect: () {
-                character.resetForBattle();
-                Navigator.pushNamed(
-                  context,
-                  '/battle-select',
-                  arguments: character,
+              character.resetForBattle();
+              SoundManager.playClick();
+              Navigator.pushNamed(
+                context,
+                '/battle-select',
+                arguments: character,
                 );
               },
             );
@@ -55,7 +68,10 @@ class CharacterRosterScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: roster.characters.length >= roster.maxCharacters
                 ? null
-                : () => Navigator.pushNamed(context, '/create'),
+                : () {
+                    SoundManager.playClick();
+                    Navigator.pushNamed(context, '/create');
+                  },
             child: Text(
               roster.characters.length >= roster.maxCharacters
                   ? 'Limite de personagens atingido'

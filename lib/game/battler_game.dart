@@ -368,7 +368,7 @@ class BattlerGame extends FlameGame {
 
     if (skill is FireballSkill) {
       _spawnFireball(casterComponent, targetComponent);
-      SoundManager.playSkill();
+      SoundManager.playFireBall();
       caster.spendMana(skill.manaCost);
       skill.currentCooldown = skill.cooldown;
     } else if (skill is FreezeSkill) {
@@ -378,49 +378,46 @@ class BattlerGame extends FlameGame {
         source: caster,
         type: DamageType.ice,
       );
-      SoundManager.playSkill();
+      SoundManager.playFrozenIce();
       caster.spendMana(skill.manaCost);
       skill.currentCooldown = skill.cooldown;
     } else if (skill is IncinerateSkill) {
       _castIncinerate(casterComponent, targetComponent);
-      SoundManager.playSkill();
+      SoundManager.playIgniteFire();
       caster.spendMana(skill.manaCost);
       skill.currentCooldown = skill.cooldown;
     } else if (skill is WarCrySkill) {
       _spawnWarCry(casterComponent);
       _applyWarCry(caster);
-      SoundManager.playSkill();
+      SoundManager.playWarScream();
       skill.currentCooldown = skill.cooldown;
     } else if (skill is SwordSpinSkill) {
       _castSwordSpin(casterComponent);
-      SoundManager.playSkill();
       skill.currentCooldown = skill.cooldown;
     } else if (skill is SureShotSkill) {
       _spawnSureShotCharge(casterComponent);
       _scheduleSureShot(casterComponent, targetComponent);
-      SoundManager.playSkill();
       caster.spendMana(skill.manaCost);
       skill.currentCooldown = skill.cooldown;
     } else if (skill is ArrowRainSkill) {
       _castArrowRain(casterComponent, targetComponent);
-      SoundManager.playSkill();
       skill.currentCooldown = skill.cooldown;
     } else if (skill is ShieldSkill) {
       _spawnShield(casterComponent);
       skill.activate(caster, target);
-      SoundManager.playSkill();
+      SoundManager.playHealSpell();
     } else if (skill is TauntSkill) {
       _spawnTaunt(targetComponent);
       skill.activate(caster, target);
-      SoundManager.playSkill();
+      SoundManager.playGoblinGrowl();
     } else if (skill is RapidShotSkill) {
       _spawnRapidShot(casterComponent, targetComponent);
       skill.activate(caster, target);
-      SoundManager.playSkill();
+      SoundManager.playArrow();
     } else if (skill is FocusSkill) {
       _spawnFocus(casterComponent);
       skill.activate(caster, target);
-      SoundManager.playSkill();
+      SoundManager.playHealSpell();
     } else {
       skill.activate(caster, target);
       SoundManager.playSkill();
@@ -507,6 +504,7 @@ class BattlerGame extends FlameGame {
   ) {
     _recordAttack(attacker.character);
     if (_isDragon(attacker.character)) {
+      SoundManager.playIgniteFire();
       _spawnDragonFire(attacker, defender);
       return;
     }
@@ -545,6 +543,14 @@ class BattlerGame extends FlameGame {
       return;
     }
 
+    if (attacker.character.name.contains('Orc')) {
+      SoundManager.playOrcAttack();
+    } else if (attacker.character.name.contains('Goblin')) {
+      SoundManager.playGoblinGrowl();
+    } else {
+      SoundManager.playSwordAttack();
+    }
+
     attacker.character.attackTarget(defender.character);
     defender.hitFlash = 0.15;
     _maybeApplyEnemyControl(attacker, defender);
@@ -556,6 +562,7 @@ class BattlerGame extends FlameGame {
     required int damage,
     required bool isCrit,
   }) {
+    SoundManager.playArrow();
     final start = Vector2(
       attacker.position.x + (attacker.isPlayer ? attacker.size.x / 2 : -attacker.size.x / 2),
       attacker.position.y,
@@ -588,6 +595,11 @@ class BattlerGame extends FlameGame {
     BattleCharacterComponent attacker,
     BattleCharacterComponent defender,
   ) {
+    if (attacker.character.name.contains('Bruxa')) {
+      SoundManager.playWitchSpell();
+    } else {
+      SoundManager.playVoidMagic();
+    }
     final start = Vector2(
       attacker.position.x + (attacker.isPlayer ? attacker.size.x / 2 : -attacker.size.x / 2),
       attacker.position.y - 6,
@@ -829,6 +841,7 @@ class BattlerGame extends FlameGame {
         .toList();
     if (targets.isEmpty) return;
 
+    SoundManager.playIgnite();
     final totalDamage = (source.attack * _incinerateSpreadMultiplier).round();
     for (final enemy in targets) {
       _applyBurn(
@@ -907,6 +920,7 @@ class BattlerGame extends FlameGame {
     if (enemy.name == 'Bruxa' || enemy.name == 'Bruxa Ancia') {
       if (defender.character.statuses.containsKey(StatusType.hex)) return;
       if (_rng.nextDouble() < 0.35) {
+        SoundManager.playWitchSpell();
         defender.character.addStatus(StatusType.hex, 3);
         defender.character.attack = (defender.character.attack - 2).clamp(1, 9999);
         _notifyUi();
@@ -936,6 +950,7 @@ class BattlerGame extends FlameGame {
 
     if (enemy.name == 'Mago Esqueleto Sombrio') {
       if ((_attackCounts[enemy] ?? 0) % 4 == 0) {
+        SoundManager.playFrozenIce();
         _spawnFreeze(defender);
         defender.character.takeDamage(
           (enemy.attack * 0.6).round(),
@@ -1140,6 +1155,14 @@ class BattlerGame extends FlameGame {
   }
 
   void _castSwordSpin(BattleCharacterComponent caster) {
+    final aliveEnemies =
+        enemyComponents.where((enemy) => enemy.character.isAlive).length;
+    if (aliveEnemies > 1) {
+      SoundManager.playSuperComboSword();
+    } else {
+      SoundManager.playSwordSkill();
+    }
+
     add(
       RingEffectComponent(
         position: caster.position.clone(),
@@ -1196,6 +1219,7 @@ class BattlerGame extends FlameGame {
           delay: wave * _arrowRainInterval,
           action: () {
             if (!caster.character.isAlive) return;
+            SoundManager.playArrow();
             final damage = (caster.character.attack * _arrowRainDamageMultiplier).round();
             final targets = enemyComponents
                 .where((enemy) => enemy.character.isAlive)

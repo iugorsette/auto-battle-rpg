@@ -4,6 +4,7 @@ import '../../domain/battle/battle_setup.dart';
 import '../../domain/battle/enemy_catalog.dart';
 import '../../domain/character/character.dart';
 import '../widgets/xp_bar.dart';
+import '../../game/sound/sound_manager.dart';
 
 class BattleSelectScreen extends StatefulWidget {
   const BattleSelectScreen({super.key});
@@ -15,6 +16,12 @@ class BattleSelectScreen extends StatefulWidget {
 class _BattleSelectScreenState extends State<BattleSelectScreen> {
   late Character player;
   late List<BattleOption> options;
+
+  @override
+  void initState() {
+    super.initState();
+    SoundManager.playIntro();
+  }
 
   @override
   void didChangeDependencies() {
@@ -51,6 +58,7 @@ class _BattleSelectScreenState extends State<BattleSelectScreen> {
         actions: [
           IconButton(
             onPressed: () {
+              SoundManager.playClick();
               setState(() {
                 options = BattleOptionGenerator()
                     .generateOptions(player.progression.level);
@@ -115,6 +123,7 @@ class _BattleSelectScreenState extends State<BattleSelectScreen> {
                       alignment: Alignment.centerRight,
                       child: ElevatedButton(
                         onPressed: () {
+                          SoundManager.playClick();
                           player.resetForBattle();
                           final enemies = option.enemies.map((e) => e.create()).toList();
                           final setup = BattleSetup(

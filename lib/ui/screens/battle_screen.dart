@@ -5,6 +5,7 @@ import 'package:flame/game.dart';
 import '../../domain/battle/battle_setup.dart';
 import '../../domain/loot/loot.dart';
 import '../../game/battler_game.dart';
+import '../../game/sound/sound_manager.dart';
 import '../widgets/skill_button.dart';
 import '../widgets/xp_bar.dart';
 
@@ -19,6 +20,12 @@ class _BattleScreenState extends State<BattleScreen> {
   late BattlerGame game;
   bool _initialized = false;
   final math.Random _rng = math.Random();
+
+  @override
+  void initState() {
+    super.initState();
+    SoundManager.stopMusic();
+  }
 
   @override
   void didChangeDependencies() {
@@ -40,6 +47,8 @@ class _BattleScreenState extends State<BattleScreen> {
         loot = LootGenerator.roll(game.player, rng: _rng);
         loot.apply(game.player);
         game.player.addRelic(loot.name);
+      } else {
+        SoundManager.playGameOver();
       }
 
       showDialog(
@@ -75,6 +84,7 @@ class _BattleScreenState extends State<BattleScreen> {
           actions: [
             TextButton(
               onPressed: () {
+                SoundManager.playClick();
                 final navigator = Navigator.of(context, rootNavigator: true);
                 navigator.pop();
                 navigator.popUntil(
@@ -93,6 +103,7 @@ class _BattleScreenState extends State<BattleScreen> {
 
   @override
   void dispose() {
+    SoundManager.playIntro();
     super.dispose();
   }
 

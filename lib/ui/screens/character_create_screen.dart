@@ -6,9 +6,21 @@ import '../../domain/character/knight.dart';
 import '../../domain/character/mage.dart';
 import '../../state/player_roster.dart';
 import '../../domain/character/character_class.dart';
+import '../../game/sound/sound_manager.dart';
 
-class CharacterCreateScreen extends StatelessWidget {
+class CharacterCreateScreen extends StatefulWidget {
   const CharacterCreateScreen({super.key});
+
+  @override
+  State<CharacterCreateScreen> createState() => _CharacterCreateScreenState();
+}
+
+class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
+  @override
+  void initState() {
+    super.initState();
+    SoundManager.playIntro();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +92,7 @@ class CharacterCreateScreen extends StatelessWidget {
                       onPressed: roster.characters.length >= roster.maxCharacters
                           ? null
                           : () {
+                              SoundManager.playClick();
                               roster.add(info.classFactory.create());
                               Navigator.pop(context);
                             },
