@@ -7,6 +7,7 @@ import '../../domain/character/mage.dart';
 import '../../state/player_roster.dart';
 import '../../domain/character/character_class.dart';
 import '../../game/sound/sound_manager.dart';
+import '../widgets/character_portrait.dart';
 
 class CharacterCreateScreen extends StatefulWidget {
   const CharacterCreateScreen({super.key});
@@ -71,19 +72,33 @@ class _CharacterCreateScreenState extends State<CharacterCreateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    info.classFactory.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(info.description),
-                  const SizedBox(height: 10),
-                  Text(
-                    'HP: ${preview.maxHp}  ATK: ${preview.attack}  DEF: ${preview.defense}  SPD: ${preview.speed}  MP: ${preview.maxMana}',
-                    style: const TextStyle(fontSize: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CharacterPortrait(character: preview, size: 72),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              info.classFactory.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(info.description),
+                            const SizedBox(height: 10),
+                            Text(
+                              'HP: ${preview.maxHp}  ATK: ${preview.attack}  DEF: ${preview.defense}  SPD: ${preview.speed}  MP: ${preview.maxMana}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Align(

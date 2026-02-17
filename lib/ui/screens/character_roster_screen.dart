@@ -5,6 +5,7 @@ import '../../domain/character/character.dart';
 import '../../state/player_roster.dart';
 import '../widgets/xp_bar.dart';
 import '../../game/sound/sound_manager.dart';
+import '../widgets/character_portrait.dart';
 
 class CharacterRosterScreen extends StatefulWidget {
   const CharacterRosterScreen({super.key});
@@ -106,19 +107,36 @@ class _CharacterCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${character.name} (Slot $slot)',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'HP: ${character.maxHp}  ATK: ${character.attack}  DEF: ${character.defense}  SPD: ${character.speed}  MP: ${character.maxMana}',
-            style: const TextStyle(fontSize: 12),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Relics: ${character.relics.length}',
-            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CharacterPortrait(character: character, size: 76),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${character.name} (Slot $slot)',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'HP: ${character.maxHp}  ATK: ${character.attack}  DEF: ${character.defense}  SPD: ${character.speed}  MP: ${character.maxMana}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Relics: ${character.relics.length}',
+                      style: const TextStyle(fontSize: 12, color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           XpBar(
