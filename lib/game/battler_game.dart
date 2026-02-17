@@ -339,6 +339,7 @@ class BattlerGame extends FlameGame {
         !_isMage(attacker.character) &&
         !_isDragon(attacker.character)) {
       attacker.triggerLunge();
+      _playMeleeAttackSfx(attacker.character);
     }
 
     _activeAttack = _PendingAttack(
@@ -543,17 +544,19 @@ class BattlerGame extends FlameGame {
       return;
     }
 
-    if (attacker.character.name.contains('Orc')) {
+    attacker.character.attackTarget(defender.character);
+    defender.hitFlash = 0.15;
+    _maybeApplyEnemyControl(attacker, defender);
+  }
+
+  void _playMeleeAttackSfx(Character attacker) {
+    if (attacker.name.contains('Orc')) {
       SoundManager.playOrcAttack();
-    } else if (attacker.character.name.contains('Goblin')) {
+    } else if (attacker.name.contains('Goblin')) {
       SoundManager.playGoblinGrowl();
     } else {
       SoundManager.playSwordAttack();
     }
-
-    attacker.character.attackTarget(defender.character);
-    defender.hitFlash = 0.15;
-    _maybeApplyEnemyControl(attacker, defender);
   }
 
   void _spawnArrowProjectile({

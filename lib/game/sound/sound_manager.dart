@@ -1,4 +1,5 @@
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/foundation.dart';
 
 class SoundManager {
   static bool _initialized = false;
@@ -47,6 +48,9 @@ class SoundManager {
         maxPlayers: config.maxPlayers,
         audioCache: FlameAudio.audioCache,
       );
+    }
+    if (!kIsWeb) {
+      await _prewarmPools();
     }
     _initialized = true;
   }
@@ -186,6 +190,19 @@ class SoundManager {
     _currentMusic = track;
     if (_muted) return;
     await FlameAudio.bgm.play(track.assetPath, volume: _musicVolume);
+  }
+
+  static Future<void> _prewarmPools() async {
+    final futures = <Future<void>>[];
+    for (final pool in _pools.values) {
+      futures.add(_prewarmPool(pool));
+    }
+    await Future.wait(futures);
+  }
+
+  static Future<void> _prewarmPool(AudioPool pool) async {
+    final stop = await pool.start(volume: 0.0);
+    await stop();
   }
 }
 
