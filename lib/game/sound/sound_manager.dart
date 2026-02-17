@@ -11,7 +11,7 @@ class SoundManager {
   static bool _muted = false;
 
   static const List<_PoolConfig> _poolConfigs = [
-    _PoolConfig(_Sfx.hit, 'audio/hit.wav', 6),
+    _PoolConfig(_Sfx.hit, 'audio/hit.mp3', 6),
     _PoolConfig(_Sfx.skill, 'audio/skill.wav', 4),
     _PoolConfig(_Sfx.click, 'audio/click-button.mp3', 3),
     _PoolConfig(_Sfx.gameOver, 'audio/game-over.mp3', 1),
